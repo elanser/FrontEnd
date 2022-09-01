@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Profile</title>
+    <link rel="stylesheet" href="css/bootstrap.css" media="all" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/Navigation-Clean.css" media="all" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/styles.css" media="all" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/untitled.css" media="all" crossorigin="anonymous">
+
+    <link href="fonts/icon?family=Material+Icons" rel="stylesheet" type="text/css" />
+    <link href="css/gijgo.min.css" rel="stylesheet" type="text/css" />
+    <script src="js/jQuery.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <script src="js/gijgo.min.js" type="text/javascript"></script>
+</head>
+
+<body>
+<script type="text/javascript">
+    var SectionGrid = null;
+    var ProfileGrid = null;
+    var IDSection = 0;
+    var IDProfile = 0;
+
+    $(document).ready(function () {
+        initHandlers();
+        getSectionGrid();
+    });
+
+    function initHandlers() {
+
+        document.addEventListener("event_section_grid_selected", (e) => {
+            IDSection = e.flag.id;
+            getProfileGrid(IDSection);
+        });
+
+        document.addEventListener("event_profile_grid_selected",(e) => {
+            IDProfile = e.flag.id;
+            alert("Fired!");
+        },false);
+
+        $("#btn_save").click(function () {
+           saveProfile();
+        });
+    }
+
+    function getSectionGrid() {
+        if (! SectionGrid) {
+            SectionGrid = $('#SectionGrid').grid({
+                dataSource: 'http://localhost:8080/sections/all',
+                columns: [
+                    { field: 'id', width: 56 },
+                    { field: 'nameSection', sortable: true }
+                ]//,
+                //pager: { limit: 2 }
+            });
+            SectionGrid.on("rowSelect", function(e,$row, id, record) {
+                var record = SectionGrid.getById(id);
+                const event = new Event("event_section_grid_selected");
+                event.flag = record;
+                document.dispatchEvent(event);
+            })
+        }
+        else {
+            $.ajaxSetup({ cache :false});
+            //grid.reload({ name: $('#txtSearch').val() });
+            SectionGrid.reload({});
+        }
+    }
+
+    function getProfileGrid(IDSection) {
+        let paramData = {
+            "id": IDSection
+        }
+        var url = "http://localhost:8080/profiles/section";
+        if (!ProfileGrid) {
+            ProfileGrid = $('#ProfileGrid').grid({
+                dataSource: url,
+                params: {ids : IDSection},
+                columns: [
+                    { field: 'id', width: 56 },
+                    { field: 'nameProfile', sortable: true },
+                    { field: 'numTickets', sortable: true },
+                    { field: 'id_section', sortable: true }
+                ]//,
+                //pager: { limit: 2 }
+            });
+            ProfileGrid.on("rowSelect", function(e,$row, id, record) {
+                var record = SectionGrid.getById(id);
+                const event = new Event("event_profile_grid_selected");
+                event.flag = record;
+                document.dispatchEvent(event);
+            })
+        }
+        else {
+            $.ajaxSetup({ cache :false});
+            ProfileGrid.clear();
+            ProfileGrid.reload({ids : IDSection});
+        }
+    }
+
+    function saveProfile() {
+        var nameProfile = $("#txtProfileName").val();
+        var numTickets = $("#txtNumTickets").val();
+        let profileParams = {
+            "idSection":IDSection,
+            "nameProfile":nameProfile,
+            "numTickets":numTickets
+        }
+        $.ajax({
+            type: "POST",
+            dataType: "json",
+            contentType: "application/json",
+            url: "http://localhost:8080/profiles/add?" + $.param(profileParams),
+            success: function (data) {
+                alert("Saved!!!!");
+            },
+            error: function (xhr, str){
+
+            }
+        });
+    }
+
+</script>
+<!-- Start: Navigation Clean -->
+<nav class="navbar navbar-light navbar-expand-md navigation-clean">
+    <div class="container"><a class="navbar-brand" href="#">Company Name</a><button data-toggle="collapse" class="navbar-toggler" data-target="#navcol-1"><span class="sr-only">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse"
+             id="navcol-1">
+            <ul class="nav navbar-nav ml-auto">
+                <li class="nav-item" role="presentation"><a class="nav-link active" href="#">First Item</a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" href="#">Second Item</a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" href="#">Third Item</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<!-- End: Navigation Clean -->
+<!-- Start: 2 Rows 1+2 Columns -->
+<div>
+    <div class="container">
+        <div class="row"><div class="col-md-6">
+            <div style="height:400pt;overflow:scroll">
+                <table id="SectionGrid"></table>
+
+            </div>
+        </div><div class="col-md-6">
+            <div style="height:400pt;overflow:scroll">
+                <table id="ProfileGrid"></table>
+            </div>
+        </div></div>
+        <div class="row">
+            <div class="col-md-12">
+                <label for="txtProfileName">Название профиля:</label><br/>
+                <input type="text" id="txtProfileName" class="edittext">
+                <label for="txtNumTickets">Билетов:</label><br/>
+                <input type="text" id="txtNumTickets" class="editnumber">
+                <hr/>
+                <button id="btn_save" class="btn btn-success" type="button">Сохранить</button>
+                <button id="btn_cancel" class="btn btn-secondary" type="button">Отменить</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End: 2 Rows 1+2 Columns -->
+
+</body>
+
+</html>
